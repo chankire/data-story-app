@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Data Story App</title>
+    <style>
+        /* Global design system inspired by lovable.dev's sleek aesthetic */
+        :root {
+            /* use a soft gradient background that subtly transitions */
+            --bg-gradient: linear-gradient(135deg, #e2e8f0, #f8fafc);
+            --primary: #6c5dd3;
+            --primary-hover: #5748b6;
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --card-blur: blur(12px);
+            --text-color: #1f2937;
+            --subtle-text: #6b7280;
+            --border-radius: 16px;
+            --shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: "Inter", sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin: 0;
+            text-align: center;
+            color: var(--primary);
+        }
+        h2 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 3rem 1rem;
+        }
+        /* card styling with glass-like effect */
+        .card {
+            backdrop-filter: var(--card-blur);
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 2rem;
+            margin-bottom: 2.5rem;
+        }
+        table.dataframe {
+            border-collapse: collapse;
+            width: 100%;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            font-size: 0.875rem;
+        }
+        table.dataframe th, table.dataframe td {
+            border: 1px solid #e5e7eb;
+            padding: 0.6rem 0.9rem;
+            text-align: left;
+        }
+        table.dataframe th {
+            background-color: #f3f4f6;
+            color: var(--text-color);
+            font-weight: 600;
+        }
+        table.dataframe tbody tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+        .upload-form input[type="file"] {
+            font-size: 1rem;
+            margin-right: 0.75rem;
+        }
+        .btn {
+            display: inline-block;
+            background: var(--primary);
+            color: #ffffff;
+            padding: 0.65rem 1.4rem;
+            border: none;
+            border-radius: 9999px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: background 0.2s ease;
+            box-shadow: 0 2px 6px rgba(108, 93, 211, 0.3);
+        }
+        .btn:hover {
+            background: var(--primary-hover);
+        }
+        .chat-box {
+            background: #f7f8fc;
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            max-height: 320px;
+            overflow-y: auto;
+        }
+        .chat-entry {
+            margin-bottom: 1.25rem;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-bubble {
+            padding: 0.65rem 1rem;
+            border-radius: 20px;
+            max-width: 75%;
+        }
+        .chat-bubble.user {
+            align-self: flex-end;
+            background: var(--primary);
+            color: #ffffff;
+        }
+        .chat-bubble.assistant {
+            align-self: flex-start;
+            background: #e5e7eb;
+            color: var(--text-color);
+        }
+        .chat-form {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+        .chat-form input[type="text"] {
+            flex: 1;
+            padding: 0.65rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 9999px;
+            font-size: 1rem;
+        }
+        .chat-form input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(108, 93, 211, 0.2);
+        }
+    </style>
+    <!-- Include Plotly.js (embedded to avoid external network dependency) -->
+    <script>{{ plotly_js | safe }}</script>
+</head>
+<body>
+<div class="container">
+    <h1>Data Story App</h1>
+
+    <div class="card">
+        <h2>1. Upload your dataset</h2>
+        <form class="upload-form" action="/upload" method="post" enctype="multipart/form-data">
+            <input type="file" name="file" required>
+            <button class="btn" type="submit">Upload</button>
+        </form>
+    </div>
+
+    {% if dataset_loaded %}
+        <div class="card">
+            <h2>2. Data Preview</h2>
+            {{ preview_html | safe }}
+        </div>
+        <div class="card">
+            <h2>3. Summary Statistics</h2>
+            {{ summary_html | safe }}
+        </div>
+        {% if corr_div %}
+        <div class="card">
+            <h2>4. Correlation Heatmap</h2>
+            {{ corr_div | safe }}
+        </div>
+        {% endif %}
+        <div class="card">
+            <h2>5. Narrative Insights</h2>
+            {{ narrative | safe }}
+        </div>
+        <div class="card">
+            <h2>6. Ask Your Data</h2>
+            <div class="chat-box">
+            {% for entry in chat_history %}
+                <div class="chat-entry">
+                    <div class="chat-bubble user">{{ entry.user }}</div>
+                    <div class="chat-bubble assistant">{{ entry.response | safe }}</div>
+                    {% if entry.figure %}
+                        <div style="margin-top: 0.5rem;">{{ entry.figure | safe }}</div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            </div>
+            <form class="chat-form" action="/query" method="post">
+                <input type="text" name="user_query" placeholder="Ask a question..." required>
+                <button class="btn" type="submit">Send</button>
+            </form>
+        </div>
+    {% else %}
+        <div class="card">
+            <p>Please upload a CSV file to begin exploring your data.</p>
+            {% if error %}
+                <p style="color: #dc2626;">{{ error }}</p>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+</body>
+</html>
