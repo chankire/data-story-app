@@ -172,8 +172,81 @@
             <h2>5. Narrative Insights</h2>
             {{ narrative | safe }}
         </div>
+
+        {% if hist_charts %}
         <div class="card">
-            <h2>6. Ask Your Data</h2>
+            <h2>Distribution Charts</h2>
+            {% for chart in hist_charts %}
+            <h3>{{ chart.title }}</h3>
+            {{ chart.figure | safe }}
+            <p>{{ chart.summary | safe }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if bar_charts %}
+        <div class="card">
+            <h2>Category Distributions</h2>
+            {% for chart in bar_charts %}
+            <h3>{{ chart.title }}</h3>
+            {{ chart.figure | safe }}
+            <p>{{ chart.summary | safe }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if time_series_charts %}
+        <div class="card">
+            <h2>Trend Analysis</h2>
+            {% for chart in time_series_charts %}
+            <h3>{{ chart.title }}</h3>
+            {{ chart.figure | safe }}
+            <p>{{ chart.summary | safe }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if box_charts %}
+        <div class="card">
+            <h2>Box Plot Charts</h2>
+            {% for chart in box_charts %}
+            <h3>{{ chart.title }}</h3>
+            {{ chart.figure | safe }}
+            <p>{{ chart.summary | safe }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% if numeric_columns %}
+        <div class="card">
+            <h2>Predictive Analytics</h2>
+            <p>Select a numeric column as the target variable and choose how many top features to display. A random forest model will be trained to predict the target.</p>
+            <form action="/model" method="post" style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: center;">
+                <div style="flex: 1; min-width: 180px;">
+                    <label for="target_variable" style="display: block; margin-bottom: 0.25rem; font-weight: 500;">Target Variable</label>
+                    <select name="target_variable" id="target_variable" style="width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #d1d5db; border-radius: 8px;">
+                        {% for col in numeric_columns %}
+                        <option value="{{ col }}">{{ col }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div style="width: 150px;">
+                    <label for="top_n" style="display: block; margin-bottom: 0.25rem; font-weight: 500;">Top Features</label>
+                    <input type="number" name="top_n" id="top_n" min="1" max="20" value="5" style="width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #d1d5db; border-radius: 8px;" />
+                </div>
+                <button class="btn" type="submit" style="margin-top: 1.75rem;">Train Model</button>
+            </form>
+            {% if model_metrics %}
+            <div style="margin-top: 1.5rem;">
+                {{ model_metrics | safe }}
+                <h3 style="margin-top: 1rem; font-size: 1.25rem; font-weight: 600;">Top Feature Importances</h3>
+                {{ model_importance | safe }}
+                <div style="margin-top: 1rem;">{{ model_fig | safe }}</div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+        <div class="card">
+            <h2>Ask Your Data</h2>
             <div class="chat-box">
             {% for entry in chat_history %}
                 <div class="chat-entry">
